@@ -43,30 +43,33 @@ Copilot Token Usage 就是把那个数字摆到状态栏上：
 
 ### 第 1 步：把扩展装进 VS Code
 
-还没上 Marketplace，所以得手动装。VS Code 会加载扩展目录里任何名字形如
-`<publisher>.<name>-<version>` 的文件夹。
+从 [Releases](https://github.com/Albert-code-1114/vscode-copilot-otel-usage/releases)
+下载 `copilot-otel-usage-0.1.0.vsix`，然后装：
 
-**Windows**
-
-```powershell
-git clone https://github.com/Albert-code-1114/vscode-copilot-otel-usage
-Move-Item .\vscode-copilot-otel-usage "$env:USERPROFILE\.vscode\extensions\xbingbing.copilot-otel-usage-0.1.0"
+```bash
+code --install-extension copilot-otel-usage-0.1.0.vsix
 ```
 
-**macOS / Linux**
+或者在 VS Code 里：<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> →
+**Extensions: Install from VSIX…**
+
+还没上 Marketplace。不想下载、想自己打这个 `.vsix`：
 
 ```bash
 git clone https://github.com/Albert-code-1114/vscode-copilot-otel-usage
-mv vscode-copilot-otel-usage ~/.vscode/extensions/xbingbing.copilot-otel-usage-0.1.0
+cd vscode-copilot-otel-usage
+npx @vscode/vsce package
 ```
 
-然后重载窗口（<kbd>Ctrl</kbd>+<kbd>R</kbd>）。
+> **为什么不直接把文件夹拷进去？** 把仓库解压到
+> `~/.vscode/extensions/xbingbing.copilot-otel-usage-0.1.0` 看着应该能用，在全新的
+> profile 上确实也能用。但 VS Code 会维护这个目录的索引，而且**并不保证会重扫**——
+> 手工拷进去的文件夹可能就那样完全隐身，扩展从不激活，也不报任何错。走 `.vsix`
+> 才是 VS Code 自己安装扩展时的那条注册路径。
 
-想一键安装：`npx @vscode/vsce package` 打出 `.vsix`，再用命令面板的
-**Extensions: Install from VSIX…** 装。
-
-> **不要**复制进 VS Code 自己的 `resources/app/extensions` 目录——那个目录每次升级都被
-> 整体替换，扩展会跟着消失。上面那个用户级扩展目录不会。
+> 也**不要**复制进 VS Code 自己的 `resources/app/extensions` 目录。那个目录每次升级
+> 都被整体替换；而且只要它在，VS Code 就把这个扩展当成内置扩展，会拒绝用 `.vsix`
+> 安装或更新它。
 
 ### 第 2 步：让 Copilot Chat 把它自己的用量导出成文件
 

@@ -15,8 +15,10 @@ First release.
   - Understands all three record shapes that can appear: OTel log records (what
     the file exporter actually writes), OTLP span envelopes, and raw SDK spans.
   - Incremental reads — only new bytes are parsed, the whole file is not re-scanned.
-  - Per-call de-duplication id (`traceId:spanId:input:output`), persisted across
-    window reloads, so replaying the file from byte 0 never double-counts.
+  - Per-call de-duplication id built from the span *plus* the usage numbers
+    (`traceId:spanId:input:output`, falling back to `time:model:usage` for the
+    span-less records Copilot writes for utility models), persisted across window
+    reloads, so replaying the file from byte 0 never double-counts.
   - Events whose local date is not today are discarded rather than folded into
     today's bucket.
 - Details panel: today's summary, per-model split, last 30 requests.

@@ -45,31 +45,36 @@ Click the status bar item for the full breakdown and the last 30 requests.
 
 ### 1. Install the extension
 
-There is no Marketplace listing yet, so install it by hand. VS Code loads any folder
-inside its extensions directory whose name is `<publisher>.<name>-<version>`.
+Grab `copilot-otel-usage-0.1.0.vsix` from
+[Releases](https://github.com/Albert-code-1114/vscode-copilot-otel-usage/releases)
+and install it:
 
-**Windows**
-
-```powershell
-git clone https://github.com/Albert-code-1114/vscode-copilot-otel-usage
-Move-Item .\vscode-copilot-otel-usage "$env:USERPROFILE\.vscode\extensions\xbingbing.copilot-otel-usage-0.1.0"
+```bash
+code --install-extension copilot-otel-usage-0.1.0.vsix
 ```
 
-**macOS / Linux**
+Or from VS Code itself: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> →
+**Extensions: Install from VSIX…**
+
+There is no Marketplace listing yet. To build the `.vsix` yourself instead of
+downloading it:
 
 ```bash
 git clone https://github.com/Albert-code-1114/vscode-copilot-otel-usage
-mv vscode-copilot-otel-usage ~/.vscode/extensions/xbingbing.copilot-otel-usage-0.1.0
+cd vscode-copilot-otel-usage
+npx @vscode/vsce package
 ```
 
-Then reload the window (<kbd>Ctrl</kbd>+<kbd>R</kbd>).
+> **Why not just copy the folder in?** Unpacking the repo into
+> `~/.vscode/extensions/xbingbing.copilot-otel-usage-0.1.0` looks like it should work,
+> and on a brand-new profile it does. But VS Code keeps an index of that directory and
+> does not reliably rescan it, so a hand-copied folder can sit there completely
+> invisible — the extension never activates, with no error anywhere. The `.vsix` route
+> goes through the same registration path VS Code uses for Marketplace installs.
 
-Prefer one click? `npx @vscode/vsce package` produces a `.vsix`, which installs via
-**Extensions: Install from VSIX…**.
-
-> **Don't** copy it into VS Code's own `resources/app/extensions` folder. That
-> directory is replaced wholesale on every VS Code update, taking the extension with
-> it. The per-user extensions directory above is not.
+> **Don't** copy it into VS Code's own `resources/app/extensions` folder either. That
+> directory is replaced wholesale on every update, and while it is there VS Code treats
+> the extension as built-in and refuses to install or update it from a `.vsix`.
 
 ### 2. Let Copilot Chat export its own usage
 
