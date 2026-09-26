@@ -7,10 +7,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/XBingbing/vscode-copilot-otel-usage.git"
+    "url": "https://github.com/Albert-code-1114/vscode-copilot-otel-usage.git"
   },
   "bugs": {
-    "url": "https://github.com/XBingbing/vscode-copilot-otel-usage/issues"
+    "url": "https://github.com/Albert-code-1114/vscode-copilot-otel-usage/issues"
   },
   "engines": {
     "vscode": "^1.85.0"

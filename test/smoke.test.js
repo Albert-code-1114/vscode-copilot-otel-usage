@@ -58,14 +58,14 @@ function span(name, attrs, spanId, op = "chat") {
 }
 
 const lines = [
-  span("chat deepseek-v4-flash", {
-    "gen_ai.request.model": "deepseek-v4-flash",
+  span("chat deepseek-chat", {
+    "gen_ai.request.model": "deepseek-chat",
     "gen_ai.usage.input_tokens": 1834,
     "gen_ai.usage.output_tokens": 412,
     "gen_ai.usage.cache_read.input_tokens": 1024,
   }, "s1"),
-  span("chat deepseek-v4-flash", {
-    "gen_ai.request.model": "deepseek-v4-flash",
+  span("chat deepseek-chat", {
+    "gen_ai.request.model": "deepseek-chat",
     "gen_ai.usage.input_tokens": 900,
     "gen_ai.usage.output_tokens": 100,
   }, "s2"),
@@ -90,7 +90,7 @@ provider._drain();
 check("解析出 2 条用量事件", seen.length === 2, `实际 ${seen.length}`);
 check("首次事件 token 正确", seen[0] && seen[0].input === 1834 && seen[0].output === 412 && seen[0].total === 2246, seen[0] ? `in=${seen[0].input} out=${seen[0].output} total=${seen[0].total}` : "无");
 check("缓存字段被识别", seen[0] && seen[0].cached === 1024, seen[0] ? String(seen[0].cached) : "无");
-check("模型名正确", seen[0] && seen[0].model === "deepseek-v4-flash", seen[0] ? seen[0].model : "无");
+check("模型名正确", seen[0] && seen[0].model === "deepseek-chat", seen[0] ? seen[0].model : "无");
 check("去重 id 每次调用唯一", seen[0] && seen[0].id === `${"a".repeat(32)}:s1:1834:412`, seen[0] ? String(seen[0].id) : "无");
 
 // --- re-drain must not double count --------------------------------------
@@ -107,8 +107,8 @@ provider._drain();
 check("追加内容被拾取", seen.length === 3, `实际 ${seen.length}`);
 
 // --- truncation restarts without double counting -------------------------
-fs.writeFileSync(jsonl, span("chat deepseek-v4-flash", {
-  "gen_ai.request.model": "deepseek-v4-flash",
+fs.writeFileSync(jsonl, span("chat deepseek-chat", {
+  "gen_ai.request.model": "deepseek-chat",
   "gen_ai.usage.input_tokens": 1834,
   "gen_ai.usage.output_tokens": 412,
 }, "s1") + "\n", "utf8");

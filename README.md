@@ -43,7 +43,35 @@ Click the status bar item for the full breakdown and the last 30 requests.
 
 ## Install
 
-### 1. Let Copilot Chat export its own usage
+### 1. Install the extension
+
+There is no Marketplace listing yet, so install it by hand. VS Code loads any folder
+inside its extensions directory whose name is `<publisher>.<name>-<version>`.
+
+**Windows**
+
+```powershell
+git clone https://github.com/Albert-code-1114/vscode-copilot-otel-usage
+Move-Item .\vscode-copilot-otel-usage "$env:USERPROFILE\.vscode\extensions\xbingbing.copilot-otel-usage-0.1.0"
+```
+
+**macOS / Linux**
+
+```bash
+git clone https://github.com/Albert-code-1114/vscode-copilot-otel-usage
+mv vscode-copilot-otel-usage ~/.vscode/extensions/xbingbing.copilot-otel-usage-0.1.0
+```
+
+Then reload the window (<kbd>Ctrl</kbd>+<kbd>R</kbd>).
+
+Prefer one click? `npx @vscode/vsce package` produces a `.vsix`, which installs via
+**Extensions: Install from VSIX…**.
+
+> **Don't** copy it into VS Code's own `resources/app/extensions` folder. That
+> directory is replaced wholesale on every VS Code update, taking the extension with
+> it. The per-user extensions directory above is not.
+
+### 2. Let Copilot Chat export its own usage
 
 Copilot Chat can export OpenTelemetry. One of its exporters writes to a file, and
 that file contains the token usage of every model call. Add this to your
@@ -64,7 +92,7 @@ that file contains the token usage of every model call. Add this to your
 > `COPILOT_OTEL_ENABLED=true`, `COPILOT_OTEL_EXPORTER_TYPE=file`,
 > `COPILOT_OTEL_FILE_EXPORTER_PATH=<path>`.
 
-### 2. Point Copilot Token Usage at the same file
+### 3. Point Copilot Token Usage at the same file
 
 ```jsonc
 {
@@ -74,7 +102,7 @@ that file contains the token usage of every model call. Add this to your
 
 The paths must match. The status bar starts moving as soon as a request finishes.
 
-### 3. Optional — see money instead of tokens
+### 4. Optional — see money instead of tokens
 
 ```jsonc
 {
@@ -193,27 +221,39 @@ replaced wholesale on every VS Code update, so every anchor breaks each time. Th
 official export carries the *same* `usage` from the *same* call, so there is nothing
 to gain by going that way. This extension reads a file; it never modifies anything.
 
-### Prior art
+### Prior art, and the difference that actually matters
 
-Worth knowing about, and different in kind:
+Several good tools already cover parts of this. They deserve naming, and the
+difference between them and this extension is not a matter of taste:
 
-- [`kafumanto/copilot-tokens`](https://github.com/kafumanto/copilot-tokens) — parses
-  VS Code's on-disk chat session files and estimates cost per session (row ②).
-- [`rajbos/github-copilot-token-usage`](https://github.com/rajbos/github-copilot-token-usage)
-  — its CLI analyses local session files; the extension itself reports GitHub quota.
-- [`UncleBats/github-copilot-token-usage`](https://github.com/UncleBats/github-copilot-token-usage)
-  — estimated usage from the same kind of sources.
+| Project | What it actually is | Where its numbers come from |
+|---|---|---|
+| [`kafumanto/copilot-tokens`](https://github.com/kafumanto/copilot-tokens) | CLI / container image. Per-session and per-model tables, JSON or CSV export, cost from OpenRouter pricing | **Re-tokenizes** the text persisted in VS Code's chat session files with the `o200k_base` tokenizer — an **estimate**. Its own README is candid about the ceiling: the counts *"do not include hidden system prompts, server-side context assembly, or any Copilot-internal tokens that are not written to disk"* |
+| [`rajbos/ai-engineering-fluency`](https://github.com/rajbos/ai-engineering-fluency) *(formerly `github-copilot-token-usage`)* | Marketplace extension + CLI. Status bar, dashboard, optional cloud sync, and support for many tools (Copilot, Claude Code, Gemini CLI, Continue, …) | Local session logs of whichever tool produced them — same estimate-by-counting-the-text approach |
+| [`UncleBats/github-copilot-token-usage`](https://github.com/UncleBats/github-copilot-token-usage) | VS Code extension showing estimated usage | The same kind of local sources |
+| **Copilot Token Usage** | Status bar + panel, one setting | The `gen_ai.usage.*` fields Copilot Chat writes to its **own OTel export** — the numbers the endpoint returned for that exact request |
 
-None of them read the export Copilot writes itself, which is the one place the
-provider-reported `usage` for a **BYOK** request is available without a proxy.
+**Estimate vs. report is the whole difference.** Counting the text that happens to be
+on disk gives you a number derived from what is visible locally. It cannot see the
+system prompt, the tool schemas, the retrieved context, or anything the server
+assembles after the request leaves your machine — and in an agentic chat that
+invisible part is most of the input, so an estimate from visible text tends to
+undercount input badly. Reading `gen_ai.usage.input_tokens` gives you the number the
+endpoint itself counted and billed.
+
+That distinction is why this extension exists at all. For a **subscription** Copilot
+user it hardly matters — GitHub's own quota UI is authoritative, and plenty of
+extensions surface it. But BYOK traffic never reaches GitHub, so GitHub has nothing
+to show you, and the only honest source of truth is the endpoint that did the
+billing. That is exactly what it writes into the OTel export.
 
 ---
 
 ## Development
 
 ```bash
-git clone https://github.com/<you>/copilot-otel-usage
-cd copilot-otel-usage
+git clone https://github.com/Albert-code-1114/vscode-copilot-otel-usage
+cd vscode-copilot-otel-usage
 
 npm test     # 4 suites, 87 assertions, no VS Code required
 npm run check  # node --check every .js file

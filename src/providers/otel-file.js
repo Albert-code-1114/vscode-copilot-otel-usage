@@ -6,26 +6,38 @@ const { normalize, emit } = require("../core/events");
 /**
  * OTel JSONL data source — the public, licence-clean way to see token usage.
  *
- * Copilot Chat can export OpenTelemetry traces to a JSON-lines file:
+ * Copilot Chat can export OpenTelemetry to a JSON-lines file:
  *
  *   "github.copilot.chat.otel.enabled": true,
  *   "github.copilot.chat.otel.exporterType": "file",
  *   "github.copilot.chat.otel.outfile": "C:\\Users\\me\\copilot-otel.jsonl"
  *
- * The file exporter writes ONE span object per line (no OTLP envelope). Each
- * line looks like:
+ * Expect THREE different kinds of record in that one file. `exporterType: "file"`
+ * builds a span, a log and a metric exporter, and all three append to the same path:
  *
- *   {"traceId":"..","spanId":"..","name":"chat gpt-5","kind":3,
- *    "startTimeUnixNano":"1750...","endTimeUnixNano":"1750...",
- *    "attributes":[{"key":"gen_ai.operation.name","value":{"stringValue":"chat"}},
- *                  {"key":"gen_ai.request.model","value":{"stringValue":"deepseek-v4-flash"}},
- *                  {"key":"gen_ai.usage.input_tokens","value":{"intValue":1834}},
- *                  {"key":"gen_ai.usage.output_tokens","value":{"intValue":412}}],
- *    "status":{"code":1}}
+ *   {"resource":{...},"scopeMetrics":[...]}      metric envelopes (ignore)
+ *   {}                                           empty lines from the span exporter
+ *   {"hrTime":[..],"attributes":{...},...}       log records — the useful ones
  *
- * This provider tails that file: on start it replays it so a window reload does
- * not lose today's numbers, then polls for appended lines. De-duplication by
- * spanId lives in core/events.js, so replaying is safe.
+ * Token counts live on the LOG RECORDS, in a flat `attributes` OBJECT — not in the
+ * OTLP `"attributes":[{"key":..,"value":{"intValue":..}}]` array form, which this
+ * file does not actually use:
+ *
+ *   {"hrTime":[1750123000,123000000],
+ *    "attributes":{"event.name":"gen_ai.client.inference.operation.details",
+ *                  "gen_ai.request.model":"deepseek-chat",
+ *                  "gen_ai.usage.input_tokens":1834,
+ *                  "gen_ai.usage.output_tokens":412},
+ *    "spanContext":{"traceId":"..","spanId":".."}}
+ *
+ * One model call is reported more than once: a `…inference.operation.details`
+ * record and a `copilot_chat.agent.turn` twin carry identical counts inside the
+ * SAME span, and several distinct calls can share one spanId. So ids are derived
+ * from the span plus the counts, never from the span alone — see core/events.js.
+ *
+ * This provider tails that file: on start it replays it so a window reload does not
+ * lose today's numbers, then polls for appended lines. De-duplication lives in
+ * core/events.js, so replaying is safe.
  */
 
 const OPERATION_KEYS = ["gen_ai.operation.name", "ai.operation.name"];

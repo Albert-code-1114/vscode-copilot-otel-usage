@@ -41,7 +41,34 @@ Copilot Token Usage 就是把那个数字摆到状态栏上：
 
 ## 安装
 
-### 第 1 步：让 Copilot Chat 把它自己的用量导出成文件
+### 第 1 步：把扩展装进 VS Code
+
+还没上 Marketplace，所以得手动装。VS Code 会加载扩展目录里任何名字形如
+`<publisher>.<name>-<version>` 的文件夹。
+
+**Windows**
+
+```powershell
+git clone https://github.com/Albert-code-1114/vscode-copilot-otel-usage
+Move-Item .\vscode-copilot-otel-usage "$env:USERPROFILE\.vscode\extensions\xbingbing.copilot-otel-usage-0.1.0"
+```
+
+**macOS / Linux**
+
+```bash
+git clone https://github.com/Albert-code-1114/vscode-copilot-otel-usage
+mv vscode-copilot-otel-usage ~/.vscode/extensions/xbingbing.copilot-otel-usage-0.1.0
+```
+
+然后重载窗口（<kbd>Ctrl</kbd>+<kbd>R</kbd>）。
+
+想一键安装：`npx @vscode/vsce package` 打出 `.vsix`，再用命令面板的
+**Extensions: Install from VSIX…** 装。
+
+> **不要**复制进 VS Code 自己的 `resources/app/extensions` 目录——那个目录每次升级都被
+> 整体替换，扩展会跟着消失。上面那个用户级扩展目录不会。
+
+### 第 2 步：让 Copilot Chat 把它自己的用量导出成文件
 
 Copilot Chat 内置了 OpenTelemetry 导出能力，其中 `file` 导出器会把每次模型调用的
 token 用量写进一个文件。在 `settings.json` 里加：
@@ -60,7 +87,7 @@ token 用量写进一个文件。在 `settings.json` 里加：
 > 也可以用环境变量（优先级更高）：`COPILOT_OTEL_ENABLED=true`、
 > `COPILOT_OTEL_EXPORTER_TYPE=file`、`COPILOT_OTEL_FILE_EXPORTER_PATH=<路径>`。
 
-### 第 2 步：把同一个路径告诉 Copilot Token Usage
+### 第 3 步：把同一个路径告诉 Copilot Token Usage
 
 ```jsonc
 {
@@ -70,7 +97,7 @@ token 用量写进一个文件。在 `settings.json` 里加：
 
 两个路径一致即可，下一次请求结束状态栏就会动。
 
-### 第 3 步（可选）：填个价目表，看钱
+### 第 4 步（可选）：填个价目表，看钱
 
 ```jsonc
 {
@@ -171,27 +198,34 @@ span 三种形态。
 带的是**同一次调用的同一个 `usage`**，走那条路并没有多拿到什么。本扩展只读文件，
 不修改任何东西。
 
-### 已有的同类项目
+### 已有的同类项目，以及真正重要的那条区别
 
-值得知道，且与本扩展做法不同：
+这个方向已经有好几个做得不错的工具，值得点名。它们和本扩展的区别不是口味问题：
 
-- [`kafumanto/copilot-tokens`](https://github.com/kafumanto/copilot-tokens) —— 解析 VS Code
-  落盘的 chat session 文件，按会话估算成本（对应上表 ②）。
-- [`rajbos/github-copilot-token-usage`](https://github.com/rajbos/github-copilot-token-usage)
-  —— 它的 CLI 分析本地 session 文件；扩展本体报的是 GitHub 额度。
-- [`UncleBats/github-copilot-token-usage`](https://github.com/UncleBats/github-copilot-token-usage)
-  —— 同样基于这类来源做估算。
+| 项目 | 它到底是什么 | 数字从哪来 |
+|---|---|---|
+| [`kafumanto/copilot-tokens`](https://github.com/kafumanto/copilot-tokens) | 命令行 / 容器镜像。按会话、按模型出表，可导出 JSON 或 CSV，用 OpenRouter 价目算钱 | 用 `o200k_base` 分词器把 VS Code 会话文件里落盘的文本**重新数一遍** —— 是**估算**。它自己的 README 说得很坦率：这些计数「不包含隐藏的系统提示词、服务端拼装的上下文，以及任何没有写进磁盘的 Copilot 内部 token」 |
+| [`rajbos/ai-engineering-fluency`](https://github.com/rajbos/ai-engineering-fluency)（原名 `github-copilot-token-usage`） | Marketplace 扩展 + 命令行。状态栏、仪表盘、可选云同步，支持一大堆工具（Copilot、Claude Code、Gemini CLI、Continue……） | 各个工具自己的本地会话日志 —— 同样是"数文本"的估算路子 |
+| [`UncleBats/github-copilot-token-usage`](https://github.com/UncleBats/github-copilot-token-usage) | 显示估算用量的 VS Code 扩展 | 同一类本地来源 |
+| **Copilot Token Usage** | 状态栏 + 面板，一行配置 | Copilot Chat 自己写进 **OTel 导出**的 `gen_ai.usage.*` 字段 —— 也就是 endpoint 针对那一次请求返回的数字 |
 
-它们都不读 Copilot 自己写出的那份导出——而那是**唯一**一个不用代理就能拿到 BYOK 请求
-provider 原始 `usage` 的地方。
+**「估算」和「上报」的差别就是全部。** 数磁盘上恰好存在的文本，得到的是"本地看得见的部分"
+推出来的数。它看不到系统提示词、工具 schema、检索进来的上下文，以及请求离开你机器之后
+服务端拼装的任何东西 —— 而在 agentic 对话里，恰恰是这看不见的部分占了输入的大头，所以
+按可见文本估算通常会严重低估输入。读 `gen_ai.usage.input_tokens` 拿到的，是 endpoint
+自己数出来、并且据此计费的那个数。
+
+这个区别也正是本扩展存在的理由。对**订阅制** Copilot 用户来说它几乎不重要——GitHub 官方
+的额度界面就是权威，看额度的扩展也有一堆。但 BYOK 的流量根本不经过 GitHub，GitHub 没有
+任何东西可以给你看，唯一诚实的来源就是那个真正计费的 endpoint。而它把数字写进了 OTel 导出。
 
 ---
 
 ## 开发
 
 ```bash
-git clone https://github.com/<you>/copilot-otel-usage
-cd copilot-otel-usage
+git clone https://github.com/Albert-code-1114/vscode-copilot-otel-usage
+cd vscode-copilot-otel-usage
 
 npm test       # 4 个套件、87 项断言，不需要启动 VS Code
 npm run check  # 对每个 .js 跑 node --check

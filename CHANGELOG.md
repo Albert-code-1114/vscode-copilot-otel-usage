@@ -35,4 +35,4 @@ First release.
 - Command titles and UI text are Chinese in this release; see *Contributing* in
   the README if you want to add a localization.
 
-[0.1.0]: https://github.com/XBingbing/copilot-otel-usage/releases/tag/v0.1.0
+[0.1.0]: https://github.com/Albert-code-1114/vscode-copilot-otel-usage/releases/tag/v0.1.0

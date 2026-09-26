@@ -201,13 +201,13 @@ async function run() {
   const line = JSON.stringify({
     traceId: "c".repeat(32),
     spanId: "act1",
-    name: "chat deepseek-v4-flash",
+    name: "chat deepseek-chat",
     kind: 3,
     startTimeUnixNano: nano,
     endTimeUnixNano: nano,
     attributes: [
       { key: "gen_ai.operation.name", value: { stringValue: "chat" } },
-      { key: "gen_ai.request.model", value: { stringValue: "deepseek-v4-flash" } },
+      { key: "gen_ai.request.model", value: { stringValue: "deepseek-chat" } },
       { key: "gen_ai.usage.input_tokens", value: { intValue: 1834 } },
       { key: "gen_ai.usage.output_tokens", value: { intValue: 412 } },
     ],
@@ -223,7 +223,7 @@ async function run() {
     check("端到端：事件进入状态栏", /2\.2K/.test(statusBars[0].text), statusBars[0].text);
     check(
       "端到端：tooltip 含模型名",
-      /deepseek-v4-flash/.test(String(statusBars[0].tooltip.value || "")),
+      /deepseek-chat/.test(String(statusBars[0].tooltip.value || "")),
       ""
     );
   } else {
