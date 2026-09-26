@@ -1,0 +1,108 @@
+{
+  "name": "copilot-otel-usage",
+  "displayName": "Copilot Token Usage (OTel)",
+  "description": "Status bar readout of real token consumption for Copilot Chat requests, including BYOK / custom endpoint models. Reads the OpenTelemetry JSONL trace that Copilot Chat can export itself — no patching, no proxy.",
+  "publisher": "xbingbing",
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/XBingbing/vscode-copilot-otel-usage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/XBingbing/vscode-copilot-otel-usage/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "scripts": {
+    "test": "node test/run-all.js",
+    "check": "node -e \"const {execFileSync}=require('child_process');const fs=require('fs'),p=require('path');const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(p.join(d,e.name)):(e.name.endsWith('.js')?[p.join(d,e.name)]:[]));for(const f of walk('.')){execFileSync(process.execPath,['--check',f]);console.log('ok  '+f);}\""
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "copilot",
+    "token",
+    "usage",
+    "byok",
+    "opentelemetry",
+    "cost"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "copilotOtelUsage.showDetails",
+        "title": "Copilot Token Usage: 查看用量明细"
+      },
+      {
+        "command": "copilotOtelUsage.diagnose",
+        "title": "Copilot Token Usage: 诊断数据源"
+      },
+      {
+        "command": "copilotOtelUsage.report",
+        "title": "Copilot Token Usage: 导出 Markdown 报告"
+      },
+      {
+        "command": "copilotOtelUsage.toggleFormat",
+        "title": "Copilot Token Usage: 切换状态栏显示格式"
+      },
+      {
+        "command": "copilotOtelUsage.rescan",
+        "title": "Copilot Token Usage: 重新扫描数据源"
+      },
+      {
+        "command": "copilotOtelUsage.reset",
+        "title": "Copilot Token Usage: 重置今日统计"
+      }
+    ],
+    "configuration": {
+      "title": "Copilot Token Usage",
+      "properties": {
+        "copilotOtelUsage.statusBarFormat": {
+          "type": "string",
+          "enum": [
+            "lastDay",
+            "last",
+            "day",
+            "cost"
+          ],
+          "enumDescriptions": [
+            "本次 / 今日累计（默认）",
+            "只显示本次请求",
+            "只显示今日累计",
+            "今日估算成本（需要配置 pricing）"
+          ],
+          "default": "lastDay",
+          "description": "状态栏显示格式"
+        },
+        "copilotOtelUsage.outfile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Copilot Chat OTel 导出目录下的 JSONL 文件路径（对应 `github.copilot.chat.otel.outfile`）。**这是本扩展默认的数据源。**",
+          "scope": "window"
+        },
+        "copilotOtelUsage.excludeModels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "不统计的模型（按名称子串匹配，例如行内补全模型）"
+        },
+        "copilotOtelUsage.pricing": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "可选的本地定价表，用于估算成本。键是模型名子串（不区分大小写），值是每 100 万 token 的美元单价。例：`{\"deepseek\": {\"in\": 0.27, \"out\": 1.1}}`。估算值仅供参考。",
+          "scope": "window"
+        }
+      }
+    }
+  }
+}

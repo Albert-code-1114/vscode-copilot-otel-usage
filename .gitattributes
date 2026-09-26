@@ -1,2 +1,10 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Normalize line endings on commit so the repo is byte-identical for everyone.
+# Without this, Git on Windows rewrites LF to CRLF on checkout and every file
+# shows up as modified.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.vsix binary
